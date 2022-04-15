@@ -85,6 +85,13 @@ func (srv Server) create(query string) (*Engine, answer, error) {
 	return eng, evt, nil
 }
 
+func (srv Server) client() *http.Client {
+	if srv.Client != nil {
+		return srv.Client
+	}
+	return http.DefaultClient
+}
+
 // Engine is a pengine.
 type Engine struct {
 	id        string
@@ -326,7 +333,7 @@ func (e *Engine) post(action string, body any) (answer, error) {
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := e.server.client().Do(req)
 	if err != nil {
 		return v, err
 	}
@@ -350,7 +357,7 @@ func (e *Engine) send(body string) (answer, error) {
 	}
 	req.Header.Set("Content-Type", "application/x-prolog; charset=utf-8")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := e.server.client().Do(req)
 	if err != nil {
 		return v, err
 	}
