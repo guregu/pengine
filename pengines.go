@@ -209,9 +209,9 @@ func (as *Answers) handle(a answer) error {
 // Next fetches the next result and returns true if successful. Use Current to grab the result.
 // Make sure to check Error after you finish iterating.
 //
-//	 answers, err := srv.Ask("between(1,6,X).")
+//	 answers, err := srv.Ask("between(1,6,X)")
 //	 if err != nil {
-//	 	t.Fatal(err)
+//	 	panic(err)
 //	 }
 //	 var got []engine.Term
 //	 for as.Next() {
@@ -220,6 +220,9 @@ func (as *Answers) handle(a answer) error {
 //	 	got = append(got, x.Prolog())
 //	 }
 //	 // got = []engine.Term{engine.Integer(1), engine.Integer(2), ...}
+//	 if err := answers.Error(); err != nil {
+//	 	panic(err)
+//	 }
 func (as *Answers) Next() bool {
 more:
 	switch {
@@ -243,7 +246,7 @@ more:
 	return false
 }
 
-// Current returns to the current Solution.
+// Current returns the current Solution.
 func (as *Answers) Current() Solution {
 	return as.cur
 }
