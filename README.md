@@ -1,7 +1,7 @@
 # pengine [![GoDoc](https://godoc.org/github.com/guregu/pengine?status.svg)](https://godoc.org/github.com/guregu/pengine)
 `import "github.com/guregu/pengine"`
 
-[Pengines](https://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/pengines.html%27)), Prolog Engines, client for Go.
+[Pengines: Prolog Engines](https://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/pengines.html%27)) client for Go.
 Pengines's motto is "Web Logic Programming Made Easy". This library lets you query SWI-Prolog from Go and from [ichiban/prolog](https://github.com/ichiban/prolog), a Prolog interpreter written in Go.
 
 **Development Status**: working towards beta. Feedback and contributions welcome!
@@ -104,7 +104,7 @@ Check out these pengines clients for other languages.
 - Torbjörn Lager, Jan Wielemaker, and everyone else who has contributed to SWI-Prolog and Pengines.
 - @ian-andrich for the Python implementation, which was a handy reference for making this.
 - @ichiban for the awesome Prolog interpreter in Go.
-- @triska for the wonderful tutorial series [The Power of Prolog](https://www.metalevel.at/prolog), which started me on my logic programming journey.
+- Markus Triska for the wonderful tutorial series [The Power of Prolog](https://www.metalevel.at/prolog), which started me on my logic programming journey.
 
 ## License
 
