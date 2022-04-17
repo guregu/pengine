@@ -9,7 +9,9 @@ import (
 )
 
 // RPC is like pengine_rpc/3 from SWI, provided for as a native predicate for ichiban/prolog.
-// Supports the following options: `application(Atom)`, `chunk(Integer)`, `src_url(Atom)`.
+//
+// Supports the following options: application(Atom), chunk(Integer), src_url(Atom).
+//
 // See: https://www.swi-prolog.org/pldoc/man?predicate=pengine_rpc/3
 func RPC(url, query, options engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
 	client := new(Client)

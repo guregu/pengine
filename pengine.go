@@ -15,7 +15,10 @@ var (
 )
 
 // Ask creates a new pengine with the given initial query, executing it and returning an answers iterator.
-// Queries must be in Prolog syntax without the terminating period or linebreak, such as `between(1,3,X)`.
+// Queries must be in Prolog syntax without the terminating period or linebreak, such as:
+//
+//	between(1,3,X)
+//
 // This uses the JSON format, so T can be anything that can unmarshal from the pengine result data.
 // This package provides a Solutions type that can handle most results in a general manner.
 func Ask[T any](ctx context.Context, c Client, query string) (Answers[T], error) {
@@ -27,7 +30,10 @@ func Ask[T any](ctx context.Context, c Client, query string) (Answers[T], error)
 }
 
 // AskProlog creates a new pengine with the given initial query, executing it and returning an answers iterator.
-// Queries must be in Prolog syntax without the terminating period or linebreak, such as `between(1,3,X)`.
+// Queries must be in Prolog syntax without the terminating period or linebreak, such as:
+//
+//	between(1,3,X)
+//
 // This uses the Prolog format and answers are ichiban/prolog terms.
 // Because ichiban/prolog is used to interpret results, using SWI's nonstandard syntax extensions like dictionaries may break it.
 func AskProlog(ctx context.Context, c Client, query string) (Answers[engine.Term], error) {
@@ -96,7 +102,7 @@ func (e *Engine) Ping(ctx context.Context) error {
 	return nil
 }
 
-// Close destroys this engine. It is usually not necessary to do this as pengines will destroy themselves.
+// Close destroys this engine. It is usually not necessary to do this as pengines will destroy themselves automatically unless configured differently.
 func (e *Engine) Close() error {
 	if e.dead {
 		return nil

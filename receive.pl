@@ -1,4 +1,5 @@
 % this is embedded by the library and used for processing Prolog-format results
+% see: prolog.go
 
 success(ID, Terms, Projection, Time, More) :-
 	'$pengine_success'(ID, Terms, Projection, Time, More).

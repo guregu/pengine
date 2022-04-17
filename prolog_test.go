@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/ichiban/prolog"
-	"github.com/ichiban/prolog/engine"
 )
 
 func TestProlog(t *testing.T) {
@@ -26,7 +25,7 @@ func TestProlog(t *testing.T) {
 	}
 
 	for as.Next(ctx) {
-		// t.Logf("%#v", as.Current())
+		t.Logf("answer: %+v", as.Current())
 	}
 	if err := as.Err(); err != nil {
 		t.Error(err)
@@ -47,17 +46,13 @@ func TestRPC(t *testing.T) {
 	var got []int
 	for sols.Next() {
 		var solution struct {
-			Model string
-			Verb  string
-			Path  engine.Term
-			Type  engine.Term
-			X     int
-			OK    string
+			X  int
+			OK string
 		}
 		if err := sols.Scan(&solution); err != nil {
 			panic(err)
 		}
-		t.Log("sol", solution)
+		t.Log("solution:", solution)
 		got = append(got, solution.X)
 		if solution.OK != "true" {
 			t.Error("not ok:", solution)

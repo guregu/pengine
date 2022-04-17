@@ -13,7 +13,10 @@ import (
 var receiveScript string
 
 // AskProlog queries this engine with Prolog format results.
-// Queries must be in Prolog syntax without the terminating period or linebreak, such as `between(1,3,X)`.
+// Queries must be in Prolog syntax without the terminating period or linebreak, such as:
+//
+//	between(1,3,X)
+//
 // Because ichiban/prolog is used to interpret results, using SWI's nonstandard syntax extensions like dictionaries may break it.
 func (e *Engine) AskProlog(ctx context.Context, query string) (Answers[engine.Term], error) {
 	as := newProlog(e)
@@ -145,6 +148,7 @@ func (p *prologAnswers) onError(id, ball engine.Term, k func(*engine.Env) *engin
 }
 
 func (p *prologAnswers) onOutput(id, term engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
+	// TODO(guregu): current unimplemented.
 	return k(env)
 }
 

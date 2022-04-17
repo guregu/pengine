@@ -22,7 +22,7 @@ import (
 //		got = append(got, x.Number)
 //	}
 //	// got = {"1", "2", "3", ...}
-//	if err := answers.Error(); err != nil {
+//	if err := answers.Err(); err != nil {
 //		panic(err)
 //	}
 type Answers[T any] interface {
@@ -31,7 +31,7 @@ type Answers[T any] interface {
 	// Current returns the current query result.
 	Current() T
 	// Close kills this query (in pengine terms, stops it).
-	// It is not necessary to call Close if all results were iterated through.
+	// It is not necessary to call Close if all results were iterated through unless the pengine is configured otherwise.
 	Close() error
 	// Cumulative returns the cumulative time taken by this query, as reported by pengines.
 	Cumulative() time.Duration

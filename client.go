@@ -17,8 +17,10 @@ type Client struct {
 	// Chunk is the number of query results to accumulate in one response. 1 by default.
 	Chunk int
 
-	// Source is Prolog source code to load (optional).
-	Source string
+	// SourceText is Prolog source code to load (optional).
+	//
+	// TODO(guregu): Currently not supported in the Prolog format (use URL instead).
+	SourceText string
 	// SourceURL specifies a URL of Prolog source for the pengine to load (optional).
 	SourceURL string
 
@@ -83,7 +85,7 @@ type options struct {
 	Chunk       int    `json:"chunk,omitempty"`
 	Ask         string `json:"ask,omitempty"`
 	Template    string `json:"template,omitempty"`
-	Source      string `json:"src_text,omitempty"`
+	SourceText  string `json:"src_text,omitempty"`
 	SourceURL   string `json:"src_url,omitempty"`
 }
 
@@ -92,6 +94,8 @@ func (c Client) options(format string) options {
 		Format:      format,
 		Application: c.Application,
 		Chunk:       c.Chunk,
+		SourceText:  c.SourceText,
+		SourceURL:   c.SourceURL,
 	}
 }
 

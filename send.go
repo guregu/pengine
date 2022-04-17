@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strings"
 )
@@ -55,9 +54,6 @@ func (e *Engine) get(ctx context.Context, action string, format string) (answer,
 	}
 	defer resp.Body.Close()
 
-	xx, _ := httputil.DumpResponse(resp, true)
-	fmt.Println("RRRESP:", string(xx))
-
 	if resp.StatusCode != http.StatusOK {
 		return v, fmt.Errorf("bad status: %d", resp.StatusCode)
 	}
@@ -93,9 +89,6 @@ func (e *Engine) post(ctx context.Context, action string, body any) (answer, err
 		return v, err
 	}
 	defer resp.Body.Close()
-
-	xx, _ := httputil.DumpResponse(resp, true)
-	fmt.Println("RRRESP:", string(xx))
 
 	if resp.StatusCode != http.StatusOK {
 		return v, fmt.Errorf("bad status: %d", resp.StatusCode)

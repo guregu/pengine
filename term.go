@@ -126,9 +126,6 @@ func (t Term) Prolog() engine.Term {
 	return nil
 }
 
-// Number is a Prolog number.
-type Number = json.Number
-
 // Compound is a Prolog compound: functor(args0, args1, ...).
 type Compound struct {
 	Functor string `json:"functor"`

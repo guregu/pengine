@@ -1,10 +1,10 @@
 # pengine [![GoDoc](https://godoc.org/github.com/guregu/pengine?status.svg)](https://godoc.org/github.com/guregu/pengine)
 `import "github.com/guregu/pengine"`
 
-[Pengines](https://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/pengines.html%27)) client for Go.
+[Pengines](https://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/pengines.html%27)), Prolog Engines, client for Go.
 Pengines's motto is "Web Logic Programming Made Easy". This library lets you query SWI-Prolog from Go and from [ichiban/prolog](https://github.com/ichiban/prolog), a Prolog interpreter written in Go.
 
-Still in experimental early stages.
+**Development Status**: working towards beta. Feedback and contributions welcome!
 
 ## Usage
 
@@ -21,8 +21,8 @@ client := pengine.Client{
     Application: "pengines_sandbox",
     // Chunk is the number of query results to accumulate in one response. 1 by default.
     Chunk: 10,
-    // Source is Prolog source code to load (optional).
-    Source: "awesome(prolog).\n",
+    // SourceText is Prolog source code to load (optional, currently only supported for the JSON format).
+    SourceText: "awesome(prolog).\n",
     // SourceURL specifies a URL of Prolog source for the pengine to load (optional).
     SourceURL: "https://example.com/script.pl",
 }
@@ -49,7 +49,7 @@ if err := answers.Error(); err != nil {
 }
 ```
 
-You can also use `client.Create` to create a pengine and `Ask` it later. If you want to stop a query early or destroy a pengine whose automatic destruction was disabled, you can call `client.Close`.
+You can also use `client.Create` to create a pengine and `Ask` it later. If you need to stop a query early or destroy a pengine whose automatic destruction was disabled, you can call `client.Close`.
 
 ### Prolog API
 
@@ -72,12 +72,32 @@ interpreter.Register3("pengine_rpc", pengine.RPC)
 % 1 2 3 4 ...
 ```
 
+## Tests
+
+Currently the tests are rather manual:
+
+```prolog
+% from swipl
+consult(example_server).
+```
+
+```bash
+# from OS terminal
+go test -v
+```
+
+Change the pengines server URL used by the tests with the `--pengines-server` command line flag.
+
 ## Other languages
 
 Check out these pengines clients for other languages.
 
+- **[Programming against SWISH](https://github.com/SWI-Prolog/swish/tree/master/client)** is an up-to-date list of clients.
+- Erlang: [erl_pengine](https://github.com/Limmen/erl_pengine)
+- Java: [JavaPengine](https://github.com/Anniepoo/JavaPengine)
 - Javascript: [pengines.js](https://pengines.swi-prolog.org/docs/documentation.html)
 - Python: [PythonPengines](https://github.com/ian-andrich/PythonPengines)
+- Ruby: [RubyPengines](https://github.com/simularity/RubyPengine)
 
 ## Thanks
 
