@@ -74,13 +74,12 @@ func RPC(url, query, options engine.Term, k func(*engine.Env) *engine.Promise, e
 		return engine.Repeat(func(ctx context.Context) *engine.Promise {
 			if as.Next(ctx) {
 				cur := as.Current()
-				_ = cur
 				return engine.Unify(query, cur, k, env)
 			}
 			as.Close()
 			switch {
 			case errors.Is(as.Err(), ErrFailed):
-				return engine.Bool(false)
+				return engine.Bool(true)
 			case as.Err() != nil:
 				return engine.Error(as.Err())
 			}

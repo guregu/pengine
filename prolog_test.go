@@ -68,4 +68,30 @@ func TestRPC(t *testing.T) {
 	if !reflect.DeepEqual(want, got) {
 		t.Error("bad rpc results. want:", want, "got:", got)
 	}
+
+	t.Run("fail", func(t *testing.T) {
+		sols := p.QuerySolution("pengine_rpc('?', fail, []), OK = false.", *penginesServerURL)
+		var val struct {
+			OK string
+		}
+		if err := sols.Scan(&val); err != prolog.ErrNoSolutions {
+			t.Fatal("wanted:", prolog.ErrNoSolutions, "got:", err)
+		}
+		if val.OK == "false" {
+			t.Error("expected empty, got:", val.OK)
+		}
+	})
+
+	t.Run("throw", func(t *testing.T) {
+		sols := p.QuerySolution("catch(pengine_rpc('?', throw(hello(world)), []), hello(Planet), (Caught = Planet)).", *penginesServerURL)
+		var val struct {
+			Caught string
+		}
+		if err := sols.Scan(&val); err != nil {
+			t.Fatal(err)
+		}
+		if val.Caught != "world" {
+			t.Error("expected world, got:", val.Caught)
+		}
+	})
 }
