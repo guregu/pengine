@@ -19,7 +19,7 @@ func TestProlog(t *testing.T) {
 
 	ctx := context.Background()
 
-	as, err := eng.AskProlog(ctx, "member(X, [1, 1, Y])")
+	as, err := eng.AskProlog(ctx, "member(X, ['あ', 1, Y])")
 	if err != nil {
 		panic(err)
 	}

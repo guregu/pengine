@@ -73,6 +73,8 @@ func (e *Engine) post(ctx context.Context, action string, body any) (answer, err
 		r = bytes.NewReader(bs)
 	}
 
+	// log.Println("post JSON:", body)
+
 	var param string
 	if e.id != "" {
 		param = "?id=" + url.QueryEscape(e.id)
@@ -101,6 +103,8 @@ func (e *Engine) post(ctx context.Context, action string, body any) (answer, err
 func (e *Engine) sendProlog(ctx context.Context, body string) (string, error) {
 	r := strings.NewReader(body + "\n.")
 
+	// log.Println("send prolog:", body)
+
 	href := fmt.Sprintf("%s/send?format=prolog&id=%s", e.client.URL, url.QueryEscape(e.id))
 	req, err := http.NewRequestWithContext(ctx, "POST", href, r)
 	if err != nil {
@@ -122,6 +126,8 @@ func (e *Engine) sendProlog(ctx context.Context, body string) (string, error) {
 		return "", err
 	}
 
+	// log.Println("got prolog:", buf.String())
+
 	return buf.String(), nil
 }
 
@@ -131,6 +137,8 @@ func (e *Engine) postProlog(action string, body any) (string, error) {
 		return "", err
 	}
 	r := bytes.NewReader(bs)
+
+	// log.Println("post prolog:", string(bs))
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s?format=prolog", e.client.URL, action), r)
 	if err != nil {
@@ -151,6 +159,8 @@ func (e *Engine) postProlog(action string, body any) (string, error) {
 	if _, err := io.Copy(&buf, resp.Body); err != nil {
 		return "", err
 	}
+
+	// log.Println("got prolog:", buf.String())
 
 	return buf.String(), nil
 }

@@ -162,7 +162,7 @@ func (as *iterator[T]) Current() T {
 
 // Close stops this query. It is not necessary to call this if all results have been iterated through.
 func (as *iterator[T]) Close() error {
-	if as.eng.dead {
+	if as == nil || as.eng == nil || as.eng.dead {
 		return nil
 	}
 	a, err := as.eng.send(context.Background(), "stop")

@@ -4,13 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"strings"
 
-	"github.com/ichiban/prolog"
 	"github.com/ichiban/prolog/engine"
 )
-
-//go:embed receive.pl
-var receiveScript string
 
 // AskProlog queries this engine with Prolog format results.
 // Queries must be in Prolog syntax without the terminating period or linebreak, such as:
@@ -31,24 +28,12 @@ func (e *Engine) AskProlog(ctx context.Context, query string) (Answers[engine.Te
 
 func newProlog(eng *Engine) *prologAnswers {
 	p := &prologAnswers{
-		Interpreter: newInterpreter(),
-		eng:         eng,
-	}
-	p.Register5("$pengine_success", p.onSuccess)
-	p.Register2("$pengine_failure", p.onFailure)
-	p.Register2("$pengine_error", p.onError)
-	p.Register2("$pengine_output", p.onOutput)
-	p.Register1("$pengine_destroy", p.onDestroy)
-	p.Register2("$pengine_create", p.onCreate)
-
-	if err := p.Exec(receiveScript); err != nil {
-		panic(err)
+		eng: eng,
 	}
 	return p
 }
 
 type prologAnswers struct {
-	*prolog.Interpreter
 	eng *Engine
 	iterator[engine.Term]
 }
@@ -90,6 +75,7 @@ func (c Client) createProlog(ctx context.Context, query string) (*prologAnswers,
 	}
 	as := newProlog(eng)
 	opts := c.options("prolog")
+	opts.Destroy = true
 	opts.Ask = query
 	opts.Template = query
 
@@ -101,68 +87,156 @@ func (c Client) createProlog(ctx context.Context, query string) (*prologAnswers,
 }
 
 func (p *prologAnswers) handle(ctx context.Context, a string) error {
-	return p.ExecContext(ctx, ":- "+a)
+	parser := defaultInterpreter.Parser(strings.NewReader(a), nil)
+	t, err := parser.Term()
+	if err != nil {
+		panic(err)
+	}
+
+	event, ok := t.(*engine.Compound)
+	if !ok {
+		return fmt.Errorf("unexpected event type: %T (value: %v)", t, t)
+	}
+	return p.handleEvent(event)
 }
 
-func (p *prologAnswers) onSuccess(id, results, projection, time, more engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
-	iter := engine.ListIterator{List: results, Env: env}
+func (p *prologAnswers) handleEvent(t *engine.Compound) error {
+	/*
+		% Original script looked like:
+
+		success(ID, Terms, Projection, Time, More) :-
+			'$pengine_success'(ID, Terms, Projection, Time, More).
+
+		failure(ID, Time) :-
+			'$pengine_failure'(ID, Time).
+
+		error(ID, Term) :-
+			'$pengine_error'(ID, Term).
+
+		create(ID, Data) :-
+			( member(slave_limit(Limit), Data) -> true
+			; Limit = 0
+			),
+			!,
+			'$pengine_create'(ID, Limit),
+			( member(answer(Goal), Data) -> call(Goal)
+			; true
+			),
+			!.
+
+		destroy(ID, Result) :-
+			call(Result),
+			'$pengine_destroy'(ID).
+
+		output(ID, Term) :-
+			'$pengine_output'(ID, Term).
+
+	*/
+	switch t.Functor {
+	case "success": // success/5
+		// id, results, projection, time, more
+		return p.onSuccess(t.Args[0], t.Args[1], t.Args[2], t.Args[3], t.Args[4])
+	case "failure": // failure/2
+		// id, time
+		return p.onFailure(t.Args[0], t.Args[1])
+	case "error": // error/2
+		// id, ball
+		return p.onError(t.Args[0], t.Args[1])
+	case "create": // create/2
+		// id, list
+		return p.onCreate(t.Args[0], t.Args[1])
+	case "destroy": // destroy/2
+		// id, event
+		return p.onDestroy(t.Args[0], t.Args[1])
+	case "output": // output/2
+		// TODO: unimplemented
+		return p.onOutput(t.Args[0], t.Args[1])
+	case "prompt": // prompt/2
+		// TODO
+	}
+	return nil
+}
+
+func (p *prologAnswers) accumulate(time engine.Term) bool {
+	n, ok := time.(engine.Float)
+	p.cum += float64(n)
+	return ok
+}
+
+func (p *prologAnswers) onSuccess(id, results, projection, time, more engine.Term) error {
+	iter := engine.ListIterator{List: results, Env: nil}
 	for iter.Next() {
-		cur := resolve(iter.Current(), env, nil)
+		cur := resolve(iter.Current(), nil, nil)
 		p.buf = append(p.buf, cur)
 		p.good++
 	}
 	if err := iter.Err(); err != nil {
-		return engine.Error(err)
+		return err
 	}
 
-	n, ok := env.Resolve(time).(engine.Float)
-	if !ok {
-		return engine.Error(engine.TypeErrorFloat(time))
-	}
-	p.cum += float64(n)
+	p.accumulate(time)
 
-	m, ok := env.Resolve(more).(engine.Atom)
+	m, ok := more.(engine.Atom)
 	if !ok {
-		return engine.Error(engine.TypeErrorAtom(more))
+		return engine.TypeErrorAtom(more)
 	}
 	p.more = m == "true"
 
-	return k(env)
+	return nil
 }
 
-func (p *prologAnswers) onFailure(id, time engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
+func (p *prologAnswers) onFailure(id, time engine.Term) error {
 	p.bad++
-
-	n, ok := env.Resolve(time).(engine.Float)
-	if !ok {
-		return engine.Error(engine.TypeErrorFloat(time))
-	}
-	p.cum += float64(n)
-
-	return k(env)
+	p.accumulate(time)
+	return nil
 }
 
-func (p *prologAnswers) onError(id, ball engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
-	p.err = &engine.Exception{Term: env.Simplify(ball)}
-	return k(env)
+func (p *prologAnswers) onError(id, ball engine.Term) error {
+	p.err = &engine.Exception{Term: ball}
+	return nil
 }
 
-func (p *prologAnswers) onOutput(id, term engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
-	// TODO(guregu): current unimplemented.
-	return k(env)
+func (p *prologAnswers) onOutput(id, term engine.Term) error {
+	// TODO(guregu): currently unimplemented.
+	return nil
 }
 
-func (p *prologAnswers) onDestroy(id engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
+func (p *prologAnswers) onDestroy(id, t engine.Term) error {
 	p.eng.die()
-	return k(env)
+	goal, ok := t.(*engine.Compound)
+	if ok {
+		return p.handleEvent(goal)
+	}
+	return nil
 }
 
-func (p *prologAnswers) onCreate(id, limit engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
-	p.eng.id = string(env.Resolve(id).(engine.Atom))
-	if lim, ok := limit.(engine.Integer); ok {
-		p.eng.openLimit = int(lim)
+func (p *prologAnswers) onCreate(id, data engine.Term) error {
+	atomID, ok := id.(engine.Atom)
+	if !ok {
+		return fmt.Errorf("expected atom ID: got %T (value: %v)", id, id)
 	}
-	return k(env)
+	p.eng.id = string(atomID)
+
+	iter := engine.ListIterator{List: data}
+	for iter.Next() {
+		cur := iter.Current()
+		switch t := cur.(type) {
+		case *engine.Compound:
+			switch t.Functor {
+			case "slave_limit":
+				n, ok := t.Args[0].(engine.Integer)
+				if ok {
+					p.eng.openLimit = int(n)
+				}
+			case "answer":
+				goal, ok := t.Args[0].(*engine.Compound)
+				if ok {
+					defer p.handleEvent(goal)
+				}
+			}
+		}
+	}
+	return iter.Err()
 }
 
 // resolve is a version of Simplify that attempts to loosely occurs-check itself to prevent infinite loops
@@ -185,98 +259,4 @@ func resolve(t engine.Term, env *engine.Env, seen map[engine.Term]struct{}) engi
 	default:
 		return t
 	}
-}
-
-// newInterpreter returns a minimal Prolog interpreter.
-func newInterpreter() *prolog.Interpreter {
-	i := prolog.Interpreter{}
-	i.Register1(`\+`, i.Negation)
-	i.Register1("call", i.Call)
-	i.Register2("call", i.Call1)
-	i.Register3("call", i.Call2)
-	i.Register4("call", i.Call3)
-	i.Register5("call", i.Call4)
-	i.Register6("call", i.Call5)
-	i.Register7("call", i.Call6)
-	i.Register8("call", i.Call7)
-	i.Register2("=", engine.Unify)
-	i.Register2("unify_with_occurs_check", engine.UnifyWithOccursCheck)
-	i.Register3("op", i.Op)
-	i.Register1("built_in", i.BuiltIn)
-
-	err := i.Exec(`		
-		:-(op(1200, xfx, :-)).
-		:-(op(1200, xfx, -->)).
-		:-(op(1200, fx, :-)).
-		:-(op(1200, fx, ?-)).
-		:-(op(1105, xfy, '|')).
-		:-(op(1100, xfy, ;)).
-		:-(op(1050, xfy, ->)).
-		:-(op(1000, xfy, ',')).
-		:-(op(900, fy, \+)).
-		:-(op(700, xfx, =)).
-		:-(op(700, xfx, \=)).
-		:-(op(700, xfx, ==)).
-		:-(op(700, xfx, \==)).
-		:-(op(700, xfx, @<)).
-		:-(op(700, xfx, @=<)).
-		:-(op(700, xfx, @>)).
-		:-(op(700, xfx, @>=)).
-		:-(op(700, xfx, is)).
-		:-(op(700, xfx, =:=)).
-		:-(op(700, xfx, =\=)).
-		:-(op(700, xfx, <)).
-		:-(op(700, xfx, =<)).
-		:-(op(700, xfx, =\=)).
-		:-(op(700, xfx, >)).
-		:-(op(700, xfx, >=)).
-		:-(op(700, xfx, =..)).
-		:-(op(500, yfx, +)).
-		:-(op(500, yfx, -)).
-		:-(op(500, yfx, /\)).
-		:-(op(500, yfx, \/)).
-		:-(op(400, yfx, *)).
-		:-(op(400, yfx, /)).
-		:-(op(400, yfx, //)).
-		:-(op(400, yfx, div)).
-		:-(op(400, yfx, rem)).
-		:-(op(400, yfx, mod)).
-		:-(op(400, yfx, <<)).
-		:-(op(400, yfx, >>)).
-		:-(op(200, xfx, **)).
-		:-(op(200, xfy, ^)).
-		:-(op(200, fy, \)).
-		:-(op(200, fy, +)).
-		:-(op(200, fy, -)).
-		:-(op(100, xfx, @)).
-		:-(op(50, xfx, :)).
-
-		:- built_in(true/0).
-		true.
-
-		:- built_in(fail/0).
-		fail :- \+true.
-
-		:- built_in(','/2).
-		P, Q :- call((P, Q)).
-
-		:- built_in(';'/2).
-		If -> Then; _ :- If, !, Then.
-		_ -> _; Else :- !, Else.
-		P; Q :- call((P; Q)).
-
-		:- built_in('->'/2).
-		If -> Then :- If, !, Then.
-
-		:- built_in(!/0).
-		! :- !.
-
-		:- built_in(member/2).
-		member(X, [X|_]).
-		member(X, [_|Xs]) :- member(X, Xs).
-	`)
-	if err != nil {
-		panic(err)
-	}
-	return &i
 }

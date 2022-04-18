@@ -53,15 +53,35 @@ You can also use `client.Create` to create a pengine and `Ask` it later. If you 
 
 ### Prolog API
 
-`client.AskProlog` returns `ichiban/prolog/engine.Term` objects. This uses an ichiban/prolog interpreter to handle results.
+`client.AskProlog` returns `ichiban/prolog/engine.Term` objects. This uses the ichiban/prolog parser to handle results in the Prolog format. Use this for the most accurate representation of Prolog terms, but be aware that the parser does not support all of SWI's bells and whistles.
+
 You can also call `pengine.Term.Prolog()` to get Prolog terms from the JSON results, but they might be lossy in terms of Prolog typing.
+
+#### Warning about Unicode atoms
+
+SWI-Prolog doesn't encode unicode atoms (such as `'漢字'`) by default, but our parser for the Prolog format API requires them, so you might want to add something like thing to your pengines server:
+
+```prolog
+pengines:write_result(prolog, Event, _) :-
+    format('Content-type: text/x-prolog; charset=UTF-8~n~n'),
+    write_term(Event,
+               [ quoted(true),
+                 quote_non_ascii(true),           % 🆕
+                 character_escapes_unicode(true), % 🆕
+                 ignore_ops(true),
+                 fullstop(true),
+                 blobs(portray),
+                 portray_goal(portray_blob),
+                 nl(true)
+               ]).
+```
 
 ### RPC for ichiban/prolog
 
 You can call remote pengines from [ichiban/prolog](https://github.com/ichiban/prolog), a Go Prolog, as well.
 
 [`pengine_rpc/3`](https://www.swi-prolog.org/pldoc/man?predicate=pengine_rpc/3) mostly works like its SWI-Prolog counterpart.
-Not all the options are implemented yet, and it is very untested.
+Not all the options are implemented yet, but it seems to work OK!
 
 ```go
 interpreter.Register3("pengine_rpc", pengine.RPC)

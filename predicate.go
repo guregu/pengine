@@ -5,8 +5,12 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/ichiban/prolog"
 	"github.com/ichiban/prolog/engine"
 )
+
+// defaultInterpreter is kept around to keep a reference to the default operator table. Hacky.
+var defaultInterpreter = prolog.New(nil, nil)
 
 // RPC is like pengine_rpc/3 from SWI, provided for as a native predicate for ichiban/prolog.
 //
@@ -26,7 +30,7 @@ func RPC(url, query, options engine.Term, k func(*engine.Env) *engine.Promise, e
 
 	query = env.Simplify(query)
 	var q strings.Builder
-	if err := engine.Write(&q, query, env, engine.WithQuoted(true)); err != nil {
+	if err := engine.Write(&q, query, env, engine.WithQuoted(true), defaultInterpreter.WithIgnoreOps(false)); err != nil {
 		return engine.Error(err)
 	}
 
@@ -70,8 +74,10 @@ func RPC(url, query, options engine.Term, k func(*engine.Env) *engine.Promise, e
 		return engine.Repeat(func(ctx context.Context) *engine.Promise {
 			if as.Next(ctx) {
 				cur := as.Current()
+				_ = cur
 				return engine.Unify(query, cur, k, env)
 			}
+			as.Close()
 			switch {
 			case errors.Is(as.Err(), ErrFailed):
 				return engine.Bool(false)
