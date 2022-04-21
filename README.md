@@ -59,19 +59,19 @@ You can also call `pengine.Term.Prolog()` to get Prolog terms from the JSON resu
 
 #### Warning about Unicode atoms
 
-SWI-Prolog doesn't encode unicode atoms (such as `'漢字'`) by default, but our parser for the Prolog format API requires them, so you might want to add something like thing to your pengines server:
+SWI-Prolog doesn't encode unicode atoms (such as `'漢字'`) by default, but our parser for the Prolog format API requires them. Also, it can't handle `\uXXXX` unicode [escapes](https://www.swi-prolog.org/pldoc/man?section=charescapes), so you might want to add something like thing to your pengines server:
 
 ```prolog
 pengines:write_result(prolog, Event, _) :-
     format('Content-type: text/x-prolog; charset=UTF-8~n~n'),
     write_term(Event,
                [ quoted(true),
-                 quote_non_ascii(true),           % 🆕
-                 character_escapes_unicode(true), % 🆕
+                 quote_non_ascii(true),            % 🆕
+                 character_escapes_unicode(false), % 🆕 must be false or you might see "no solutions found" errors!
                  ignore_ops(true),
                  fullstop(true),
                  blobs(portray),
-                 portray_goal(portray_blob),
+                 portray_goal(pengines:portray_blob),
                  nl(true)
                ]).
 ```
