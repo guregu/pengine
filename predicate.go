@@ -13,8 +13,9 @@ import (
 var defaultInterpreter = prolog.New(nil, nil)
 
 // RPC is like pengine_rpc/3 from SWI, provided for as a native predicate for ichiban/prolog.
+// This is a native predicate for Prolog. To use the API from Go, use AskProlog.
 //
-// Supports the following options: application(Atom), chunk(Integer), src_url(Atom).
+// Supports the following options: application(Atom), chunk(Integer), src_text(Atom), src_url(Atom), debug(Boolean).
 //
 // See: https://www.swi-prolog.org/pldoc/man?predicate=pengine_rpc/3
 func RPC(url, query, options engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
@@ -52,6 +53,13 @@ func RPC(url, query, options engine.Term, k func(*engine.Env) *engine.Promise, e
 					return engine.Error(engine.TypeErrorInteger(x.Args[0]))
 				}
 				client.Chunk = int(n)
+			case "src_text":
+				// TODO(guregu): support strings as well
+				a, ok := env.Resolve(x.Args[0]).(engine.Atom)
+				if !ok {
+					return engine.Error(engine.TypeErrorAtom(x.Args[0]))
+				}
+				client.SourceText = string(a)
 			case "src_url":
 				a, ok := env.Resolve(x.Args[0]).(engine.Atom)
 				if !ok {
@@ -76,20 +84,25 @@ func RPC(url, query, options engine.Term, k func(*engine.Env) *engine.Promise, e
 		return engine.Error(err)
 	}
 
-	return engine.Delay(func(context.Context) *engine.Promise {
-		return engine.Repeat(func(ctx context.Context) *engine.Promise {
-			if as.Next(ctx) {
-				cur := as.Current()
-				return engine.Unify(query, cur, k, env)
-			}
-			as.Close()
-			switch {
-			case errors.Is(as.Err(), ErrFailed):
-				return engine.Bool(true)
-			case as.Err() != nil:
-				return engine.Error(as.Err())
-			}
-			return engine.Bool(true)
-		})
+	return doRPC(as, query, k, env)
+}
+
+func doRPC(as *prologAnswers, query engine.Term, k func(*engine.Env) *engine.Promise, env *engine.Env) *engine.Promise {
+	var done bool
+	return engine.Delay(func(ctx context.Context) *engine.Promise {
+		if as.Next(ctx) {
+			cur := as.Current()
+			return engine.Unify(query, cur, k, env)
+		}
+		done = true
+		if err := as.Err(); err != nil && !errors.Is(err, ErrFailed) {
+			return engine.Error(err)
+		}
+		return engine.Bool(false)
+	}, func(ctx context.Context) *engine.Promise {
+		if !done {
+			return doRPC(as, query, k, env)
+		}
+		return engine.Bool(false)
 	})
 }
