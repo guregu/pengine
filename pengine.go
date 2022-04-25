@@ -47,6 +47,7 @@ type Engine struct {
 	openLimit int  // TODO: use this
 	destroy   bool // automatically destroy if true (default)
 	dead      bool
+	debug     bool
 }
 
 // ID return this pengine's ID.

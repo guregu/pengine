@@ -36,7 +36,7 @@ func TestRPC(t *testing.T) {
 	p := prolog.New(nil, os.Stdout)
 	p.Register3("pengine_rpc", RPC)
 
-	sols, err := p.Query("pengine_rpc('?', between(1,3,X), [chunk(2)]), OK = true.", *penginesServerURL)
+	sols, err := p.Query("pengine_rpc('?', between(1,3,X), [chunk(2), debug(true)]), OK = true.", *penginesServerURL)
 	if err != nil {
 		t.Fatal(err)
 	}

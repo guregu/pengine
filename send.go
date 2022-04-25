@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -73,7 +74,9 @@ func (e *Engine) post(ctx context.Context, action string, body any) (answer, err
 		r = bytes.NewReader(bs)
 	}
 
-	// log.Println("post JSON:", body)
+	if e.debug {
+		log.Printf("pengine(%s) → post JSON: %s", e.id, body)
+	}
 
 	var param string
 	if e.id != "" {
@@ -103,7 +106,9 @@ func (e *Engine) post(ctx context.Context, action string, body any) (answer, err
 func (e *Engine) sendProlog(ctx context.Context, body string) (string, error) {
 	r := strings.NewReader(body + "\n.")
 
-	// log.Println("send prolog:", body)
+	if e.debug {
+		log.Printf("pengine(%s) → send prolog: %s", e.id, body)
+	}
 
 	href := fmt.Sprintf("%s/send?format=prolog&id=%s", e.client.URL, url.QueryEscape(e.id))
 	req, err := http.NewRequestWithContext(ctx, "POST", href, r)
@@ -126,7 +131,9 @@ func (e *Engine) sendProlog(ctx context.Context, body string) (string, error) {
 		return "", err
 	}
 
-	// log.Println("got prolog:", buf.String())
+	if e.debug {
+		log.Printf("pengine(%s) ← got prolog: %s", e.id, buf.String())
+	}
 
 	return buf.String(), nil
 }
@@ -138,7 +145,9 @@ func (e *Engine) postProlog(action string, body any) (string, error) {
 	}
 	r := bytes.NewReader(bs)
 
-	// log.Println("post prolog:", string(bs))
+	if e.debug {
+		log.Printf("pengine(%s) → post prolog: %s", e.id, string(bs))
+	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s?format=prolog", e.client.URL, action), r)
 	if err != nil {
@@ -160,7 +169,9 @@ func (e *Engine) postProlog(action string, body any) (string, error) {
 		return "", err
 	}
 
-	// log.Println("got prolog:", buf.String())
+	if e.debug {
+		log.Printf("pengine(%s) ← got prolog: %s", e.id, buf.String())
+	}
 
 	return buf.String(), nil
 }

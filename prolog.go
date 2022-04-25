@@ -72,6 +72,7 @@ func (c Client) createProlog(ctx context.Context, query string) (*prologAnswers,
 	eng := &Engine{
 		client:  c,
 		destroy: true,
+		debug:   c.Debug,
 	}
 	as := newProlog(eng)
 	opts := c.options("prolog")

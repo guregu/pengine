@@ -27,6 +27,9 @@ type Client struct {
 	// HTTP is the HTTP client used to make API requests.
 	// If nil, http.DefaultClient is used.
 	HTTP *http.Client
+
+	// If true, prints debug logs.
+	Debug bool
 }
 
 // Create creates a new pengine. Call Engine's Ask method to query it.
@@ -58,6 +61,7 @@ func (c Client) create(ctx context.Context, query string, destroy bool) (*Engine
 	eng := &Engine{
 		client:  c,
 		destroy: destroy,
+		debug:   c.Debug,
 	}
 	opts := c.options("json")
 	if query != "" {

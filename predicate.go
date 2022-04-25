@@ -58,6 +58,12 @@ func RPC(url, query, options engine.Term, k func(*engine.Env) *engine.Promise, e
 					return engine.Error(engine.TypeErrorAtom(x.Args[0]))
 				}
 				client.SourceURL = string(a)
+			case "debug":
+				a, ok := env.Resolve(x.Args[0]).(engine.Atom)
+				if !ok {
+					return engine.Error(engine.TypeErrorAtom(x.Args[0]))
+				}
+				client.Debug = a == "true"
 			}
 		}
 	}
