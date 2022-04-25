@@ -133,5 +133,5 @@ type Compound struct {
 }
 
 func escapeAtom(atom string) string {
-	return `'` + strings.ReplaceAll(atom, `'`, `\'`) + `'`
+	return stringify(engine.Atom(atom))
 }

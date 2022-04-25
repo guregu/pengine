@@ -137,6 +137,10 @@ func (opts options) String() string {
 		write("template(", opts.Template, ")")
 	}
 
+	if opts.SourceText != "" {
+		write("src_text(", escapeAtom(opts.SourceText), ")")
+	}
+
 	if opts.SourceURL != "" {
 		write("src_url(", escapeAtom(opts.SourceURL), ")")
 	}

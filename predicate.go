@@ -106,3 +106,10 @@ func doRPC(as *prologAnswers, query engine.Term, k func(*engine.Env) *engine.Pro
 		return engine.Bool(false)
 	})
 }
+
+
+func stringify(t engine.Term) string {
+	var q strings.Builder
+	_ = engine.Write(&q, t, nil, engine.WithQuoted(true), defaultInterpreter.WithIgnoreOps(false))
+	return q.String()
+}

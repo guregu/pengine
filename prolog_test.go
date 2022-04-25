@@ -7,11 +7,13 @@ import (
 	"testing"
 
 	"github.com/ichiban/prolog"
+	"github.com/ichiban/prolog/engine"
 )
 
 func TestProlog(t *testing.T) {
 	eng, err := Client{
-		URL: *penginesServerURL,
+		URL:        *penginesServerURL,
+		SourceText: "'メンバー'(X, List) :- member(X, List).\n",
 	}.Create(context.Background(), true)
 	if err != nil {
 		t.Fatal(err)
@@ -19,13 +21,20 @@ func TestProlog(t *testing.T) {
 
 	ctx := context.Background()
 
-	as, err := eng.AskProlog(ctx, "member(X, ['あ', 1, Y])")
+	as, err := eng.AskProlog(ctx, "'メンバー'(X, ['あ', 1, Y])")
 	if err != nil {
 		panic(err)
 	}
 
 	for as.Next(ctx) {
 		t.Logf("answer: %+v", as.Current())
+		cmp, ok := as.Current().(*engine.Compound)
+		if !ok {
+			t.Fatal("not a compound", as.Current())
+		}
+		if cmp.Functor != "メンバー" {
+			t.Error("unexpected functor. want: メンバー got:", cmp.Functor)
+		}
 	}
 	if err := as.Err(); err != nil {
 		t.Error(err)
