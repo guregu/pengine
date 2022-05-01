@@ -45,7 +45,7 @@ func (c Client) Create(ctx context.Context, destroy bool) (*Engine, error) {
 }
 
 // Ask creates a new engine with the given initial query and executes it, returning the answers iterator.
-func (c Client) Ask(ctx context.Context, query string) (*iterator[Solution], error) {
+func (c Client) Ask(ctx context.Context, query string) (Answers[Solution], error) {
 	eng, answer, err := c.create(ctx, query, true)
 	if err != nil {
 		return nil, err
