@@ -4,7 +4,7 @@
 [Pengines: Prolog Engines](https://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/pengines.html%27)) client for Go.
 Pengines's motto is "Web Logic Programming Made Easy". This library lets you query SWI-Prolog from Go and from [ichiban/prolog](https://github.com/ichiban/prolog), a Prolog interpreter written in Go.
 
-**Development Status**: working towards beta. Feedback and contributions welcome!
+**Development Status**: beta. Feedback and contributions welcome!
 
 ## Usage
 
@@ -59,15 +59,22 @@ You can also call `pengine.Term.Prolog()` to get Prolog terms from the JSON resu
 
 #### Warning about Unicode atoms
 
-SWI-Prolog doesn't encode unicode atoms (such as `'漢字'`) by default, but our parser for the Prolog format API requires them. Also, it can't handle `\uXXXX` unicode [escapes](https://www.swi-prolog.org/pldoc/man?section=charescapes), so you might want to add something like thing to your pengines server:
+SWI-Prolog's defaults around Unicode cause errors for our Prolog parser at the moment, so we need to tweak the configuration.
+  - We [can't yet handle unquoted Unicode atoms](https://github.com/ichiban/prolog/issues/212) and need them to be quoted like `'漢字'`
+  - We can't handle SWI's `\uXXXX` Unicode [escapes](https://www.swi-prolog.org/pldoc/man?section=charescapes).
+    - This can interfere with unification of query results and cause unexpected "no solutions found" errors.
+
+Luckily, Pengines makes it easy for us to customize the result formatter and fix this. Just define a [`pengines:write_result/3`](https://www.swi-prolog.org/pldoc/doc_for?object=pengines%3Awrite_result/3) hook for the `prolog` format on your Pengines server.
+
+Here's an example of a working Pengines configuration:
 
 ```prolog
 pengines:write_result(prolog, Event, _) :-
     format('Content-type: text/x-prolog; charset=UTF-8~n~n'),
     write_term(Event,
                [ quoted(true),
-                 quote_non_ascii(true),            % 🆕
-                 character_escapes_unicode(false), % 🆕 must be false or you might see "no solutions found" errors!
+                 quote_non_ascii(true),            % 👈
+                 character_escapes_unicode(false), % 👈
                  ignore_ops(true),
                  fullstop(true),
                  blobs(portray),
