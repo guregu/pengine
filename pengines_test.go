@@ -28,7 +28,7 @@ func TestPengines(t *testing.T) {
 		t.Error(err)
 	}
 
-	as, err := eng.Ask(ctx, "member(X, [1, 2.1, a, b(c), [d], should_stop_before_this])")
+	as, err := eng.Ask(ctx, "member(X, [1, 2.1, 'あ', b(c), [d], should_stop_before_this])")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func TestPengines(t *testing.T) {
 	expect := []engine.Term{
 		engine.Integer(1),
 		engine.Float(2.1),
-		engine.Atom("a"),
+		engine.Atom("あ"),
 		&engine.Compound{Functor: "b", Args: []engine.Term{engine.Atom("c")}},
 		engine.List(engine.Atom("d")),
 	}

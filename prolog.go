@@ -28,13 +28,14 @@ func (e *Engine) AskProlog(ctx context.Context, query string) (Answers[engine.Te
 
 func newProlog(eng *Engine) *prologAnswers {
 	p := &prologAnswers{
-		eng: eng,
+		iterator: iterator[engine.Term]{
+			eng: eng,
+		},
 	}
 	return p
 }
 
 type prologAnswers struct {
-	eng *Engine
 	iterator[engine.Term]
 }
 
