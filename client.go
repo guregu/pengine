@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/ichiban/prolog"
 )
 
 // Client is a Pengines endpoint.
@@ -18,8 +20,6 @@ type Client struct {
 	Chunk int
 
 	// SourceText is Prolog source code to load (optional).
-	//
-	// TODO(guregu): Currently not supported in the Prolog format (use URL instead).
 	SourceText string
 	// SourceURL specifies a URL of Prolog source for the pengine to load (optional).
 	SourceURL string
@@ -27,6 +27,11 @@ type Client struct {
 	// HTTP is the HTTP client used to make API requests.
 	// If nil, http.DefaultClient is used.
 	HTTP *http.Client
+
+	// Interpreter is the Prolog interpreter used for decoding Prolog-format responses.
+	// This is useful for handling custom operators.
+	// If nil, a default interpreter will be used.
+	Interpreter *prolog.Interpreter
 
 	// If true, prints debug logs.
 	Debug bool

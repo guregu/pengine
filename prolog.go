@@ -89,7 +89,11 @@ func (c Client) createProlog(ctx context.Context, query string) (*prologAnswers,
 }
 
 func (p *prologAnswers) handle(ctx context.Context, a string) error {
-	parser := defaultInterpreter.Parser(strings.NewReader(a), nil)
+	interpreter := defaultInterpreter
+	if p.eng.client.Interpreter != nil {
+		interpreter = p.eng.client.Interpreter
+	}
+	parser := interpreter.Parser(strings.NewReader(a), nil)
 	t, err := parser.Term()
 	if err != nil {
 		panic(err)
@@ -180,7 +184,7 @@ func (p *prologAnswers) onSuccess(id, results, projection, time, more engine.Ter
 
 	m, ok := more.(engine.Atom)
 	if !ok {
-		return engine.TypeErrorAtom(more)
+		return engine.TypeError(engine.ValidTypeAtom, more, nil)
 	}
 	p.more = m == "true"
 
@@ -194,7 +198,7 @@ func (p *prologAnswers) onFailure(id, time engine.Term) error {
 }
 
 func (p *prologAnswers) onError(id, ball engine.Term) error {
-	p.err = &engine.Exception{Term: ball}
+	p.err = engine.NewException(ball, nil)
 	return nil
 }
 

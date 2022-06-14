@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 )
@@ -15,6 +16,10 @@ import (
 func (e *Engine) send(ctx context.Context, body string) (answer, error) {
 	var v answer
 	r := strings.NewReader(body + "\n.")
+
+	if e.debug {
+		log.Printf("pengine(%s) → send0: %s", e.id, body)
+	}
 
 	href := fmt.Sprintf("%s/send?format=json&id=%s", e.client.URL, url.QueryEscape(e.id))
 	req, err := http.NewRequestWithContext(ctx, "POST", href, r)
@@ -30,6 +35,12 @@ func (e *Engine) send(ctx context.Context, body string) (answer, error) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return v, fmt.Errorf("bad status: %d", resp.StatusCode)
+	}
+
+	if e.debug {
+		log.Printf("pengine(%s) ← receive json...", e.id)
+		dump, _ := httputil.DumpResponse(resp, true)
+		log.Println(string(dump))
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&v)
@@ -57,6 +68,12 @@ func (e *Engine) get(ctx context.Context, action string, format string) (answer,
 
 	if resp.StatusCode != http.StatusOK {
 		return v, fmt.Errorf("bad status: %d", resp.StatusCode)
+	}
+
+	if e.debug {
+		log.Printf("pengine(%s) ← got json...", e.id)
+		dump, _ := httputil.DumpResponse(resp, true)
+		log.Println(string(dump))
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&v)
@@ -97,6 +114,11 @@ func (e *Engine) post(ctx context.Context, action string, body any) (answer, err
 
 	if resp.StatusCode != http.StatusOK {
 		return v, fmt.Errorf("bad status: %d", resp.StatusCode)
+	}
+
+	if e.debug {
+		dump, _ := httputil.DumpResponse(resp, true)
+		log.Println(string(dump))
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&v)

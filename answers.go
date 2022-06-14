@@ -150,6 +150,9 @@ more:
 			as.err = err
 			return false
 		}
+		if a.Event == "failure" {
+			break
+		}
 		goto more
 	}
 	return false

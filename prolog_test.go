@@ -14,6 +14,7 @@ func TestProlog(t *testing.T) {
 	eng, err := Client{
 		URL:        *penginesServerURL,
 		SourceText: "'メンバー'(X, List) :- member(X, List).\n",
+		Debug:      true,
 	}.Create(context.Background(), true)
 	if err != nil {
 		t.Fatal(err)
@@ -23,7 +24,7 @@ func TestProlog(t *testing.T) {
 
 	as, err := eng.AskProlog(ctx, "'メンバー'(X, ['あ', 1, Y])")
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	for as.Next(ctx) {
@@ -78,6 +79,26 @@ func TestRPC(t *testing.T) {
 		t.Error("bad rpc results. want:", want, "got:", got)
 	}
 
+	t.Run("complex", func(t *testing.T) {
+		// sol := p.QuerySolution(`pengine_rpc(?, (A=a+b->true ; false), [debug(true)]).`, *penginesServerURL)
+		sol := p.QuerySolution("pengine_rpc('?', (Foo = bar+baz, (Foo = A+B -> true ; A = x)), [debug(true)]).", *penginesServerURL)
+		if err := sol.Err(); err != nil {
+			t.Fatal(err)
+		}
+		type result struct {
+			A string
+			B string
+		}
+		want := result{A: "bar", B: "baz"}
+		var got result
+		if err := sol.Scan(&got); err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(want, got) {
+			t.Error("bad rpc results. want:", want, "got:", got)
+		}
+	})
+
 	t.Run("fail", func(t *testing.T) {
 		sols := p.QuerySolution("pengine_rpc('?', fail, []), OK = false.", *penginesServerURL)
 		var val struct {
@@ -92,7 +113,7 @@ func TestRPC(t *testing.T) {
 	})
 
 	t.Run("throw", func(t *testing.T) {
-		sols := p.QuerySolution("catch(pengine_rpc('?', throw(hello(world)), []), hello(Planet), (Caught = Planet)).", *penginesServerURL)
+		sols := p.QuerySolution("catch(pengine_rpc('?', throw(hello(world)), [debug(true)]), hello(Planet), (Caught = Planet)).", *penginesServerURL)
 		var val struct {
 			Caught string
 		}
