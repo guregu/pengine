@@ -67,6 +67,7 @@ func (c Client) create(ctx context.Context, query string, destroy bool) (*Engine
 	if query != "" {
 		opts.Ask = query
 	}
+	opts.Destroy = destroy
 
 	evt, err := eng.post(ctx, "create", opts)
 	if err != nil {

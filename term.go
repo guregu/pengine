@@ -25,13 +25,14 @@ type Solution map[string]Term
 // One of the fields should be "truthy".
 // This can be handy for parsing query results in JSON format.
 type Term struct {
-	Atom     *string
-	Number   *json.Number
-	Compound *Compound
-	Variable *string
-	Boolean  *bool
-	List     []Term
-	Null     bool
+	Atom       *string
+	Number     *json.Number
+	Compound   *Compound
+	Variable   *string
+	Boolean    *bool
+	List       []Term
+	Dictionary map[string]Term
+	Null       bool
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -62,7 +63,21 @@ func (t *Term) UnmarshalJSON(b []byte) error {
 	case []any:
 		return json.Unmarshal(b, &t.List)
 	case map[string]any:
-		return json.Unmarshal(b, &t.Compound)
+		if _, ok := x["functor"]; ok {
+			return json.Unmarshal(b, &t.Compound)
+		}
+		rawDict := make(map[string]json.RawMessage, len(x))
+		if err := json.Unmarshal(b, &rawDict); err != nil {
+			return err
+		}
+		t.Dictionary = make(map[string]Term, len(rawDict))
+		for k, raw := range rawDict {
+			var v Term
+			if err := json.Unmarshal(raw, &v); err != nil {
+				return err
+			}
+			t.Dictionary[k] = v
+		}
 	case nil:
 		t.Null = true
 	default:

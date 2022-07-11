@@ -95,6 +95,11 @@ func (e *Engine) post(ctx context.Context, action string, body any) (answer, err
 	}
 	defer resp.Body.Close()
 
+	// if e.debug {
+	// 	rrr, _ := httputil.DumpResponse(resp, true)
+	// 	fmt.Println("GOT: ", string(rrr))
+	// }
+
 	if resp.StatusCode != http.StatusOK {
 		return v, fmt.Errorf("bad status: %d", resp.StatusCode)
 	}

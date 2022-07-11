@@ -92,7 +92,7 @@ func (p *prologAnswers) handle(ctx context.Context, a string) error {
 	parser := defaultInterpreter.Parser(strings.NewReader(a), nil)
 	t, err := parser.Term()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("pengines: failed to parse response: %w", err)
 	}
 
 	event, ok := t.(*engine.Compound)
