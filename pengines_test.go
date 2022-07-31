@@ -15,6 +15,7 @@ func TestPengines(t *testing.T) {
 	client := Client{
 		URL:   *penginesServerURL,
 		Chunk: 5,
+		Debug: true,
 	}
 
 	ctx := context.Background()
