@@ -46,7 +46,10 @@ func rpc(p *prolog.Interpreter) func(url, query, options engine.Term, k func(*en
 
 		query = env.Simplify(query)
 		var q strings.Builder
-		if err := engine.Write(&q, query, env, engine.WithQuoted(true), engine.WithPriority(1200), defaultInterpreter.WithIgnoreOps(false)); err != nil {
+		if err := query.WriteTerm(&q, &engine.WriteOptions{
+			Quoted:    true,
+			IgnoreOps: true,
+		}, env); err != nil {
 			return engine.Error(err)
 		}
 
@@ -124,7 +127,10 @@ func doRPC(as *prologAnswers, query engine.Term, k func(*engine.Env) *engine.Pro
 
 func stringify(t engine.Term) string {
 	var q strings.Builder
-	_ = engine.Write(&q, t, nil, engine.WithQuoted(true), defaultInterpreter.WithIgnoreOps(false))
+	_ = t.WriteTerm(&q, &engine.WriteOptions{
+		Quoted:    true,
+		IgnoreOps: false,
+	}, nil)
 	return q.String()
 }
 
