@@ -60,7 +60,6 @@ You can also call `pengine.Term.Prolog()` to get Prolog terms from the JSON resu
 #### Warning about Unicode atoms
 
 SWI-Prolog's defaults around Unicode cause errors for our Prolog parser at the moment, so we need to tweak the configuration.
-  - We [can't yet handle unquoted Unicode atoms](https://github.com/ichiban/prolog/issues/212) and need them to be quoted like `'漢字'`
   - We can't handle SWI's `\uXXXX` Unicode [escapes](https://www.swi-prolog.org/pldoc/man?section=charescapes).
     - This can interfere with unification of query results and cause unexpected "no solutions found" errors.
 
