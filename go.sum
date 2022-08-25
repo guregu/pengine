@@ -3,6 +3,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/ichiban/prolog v0.10.4 h1:GL/+f0Abd7llsVnNaFkuIdQPJ+oAlHA2Z82y/5tQfCA=
 github.com/ichiban/prolog v0.10.4/go.mod h1:qB0m6pWsd/XghbWmS5D6GExVhEvNqsa+iBPFMpTxS+U=
+github.com/ichiban/prolog v0.10.5 h1:6UpnWeSq1u4NNoxYD61z9qhTw6LR1M3OlxB51ONbnEw=
+github.com/ichiban/prolog v0.10.5/go.mod h1:qB0m6pWsd/XghbWmS5D6GExVhEvNqsa+iBPFMpTxS+U=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
