@@ -99,14 +99,14 @@ func (p *prologAnswers) handle(ctx context.Context, a string) error {
 		return fmt.Errorf("pengines: failed to parse response: %w", err)
 	}
 
-	event, ok := t.(*engine.Compound)
+	event, ok := t.(engine.Compound)
 	if !ok {
 		return fmt.Errorf("unexpected event type: %T (value: %v)", t, t)
 	}
 	return p.handleEvent(event)
 }
 
-func (p *prologAnswers) handleEvent(t *engine.Compound) error {
+func (p *prologAnswers) handleEvent(t engine.Compound) error {
 	/*
 		% Original script looked like:
 
@@ -138,25 +138,25 @@ func (p *prologAnswers) handleEvent(t *engine.Compound) error {
 			'$pengine_output'(ID, Term).
 
 	*/
-	switch t.Functor {
+	switch t.Functor() {
 	case "success": // success/5
 		// id, results, projection, time, more
-		return p.onSuccess(t.Args[0], t.Args[1], t.Args[2], t.Args[3], t.Args[4])
+		return p.onSuccess(t.Arg(0), t.Arg(1), t.Arg(2), t.Arg(3), t.Arg(4))
 	case "failure": // failure/2
 		// id, time
-		return p.onFailure(t.Args[0], t.Args[1])
+		return p.onFailure(t.Arg(0), t.Arg(1))
 	case "error": // error/2
 		// id, ball
-		return p.onError(t.Args[0], t.Args[1])
+		return p.onError(t.Arg(0), t.Arg(1))
 	case "create": // create/2
 		// id, list
-		return p.onCreate(t.Args[0], t.Args[1])
+		return p.onCreate(t.Arg(0), t.Arg(1))
 	case "destroy": // destroy/2
 		// id, event
-		return p.onDestroy(t.Args[0], t.Args[1])
+		return p.onDestroy(t.Arg(0), t.Arg(1))
 	case "output": // output/2
 		// TODO: unimplemented
-		return p.onOutput(t.Args[0], t.Args[1])
+		return p.onOutput(t.Arg(0), t.Arg(1))
 	case "prompt": // prompt/2
 		// TODO
 	}
@@ -209,7 +209,7 @@ func (p *prologAnswers) onOutput(id, term engine.Term) error {
 
 func (p *prologAnswers) onDestroy(id, t engine.Term) error {
 	p.eng.die()
-	goal, ok := t.(*engine.Compound)
+	goal, ok := t.(engine.Compound)
 	if ok {
 		return p.handleEvent(goal)
 	}
@@ -227,15 +227,15 @@ func (p *prologAnswers) onCreate(id, data engine.Term) error {
 	for iter.Next() {
 		cur := iter.Current()
 		switch t := cur.(type) {
-		case *engine.Compound:
-			switch t.Functor {
+		case engine.Compound:
+			switch t.Functor() {
 			case "slave_limit":
-				n, ok := t.Args[0].(engine.Integer)
+				n, ok := t.Arg(0).(engine.Integer)
 				if ok {
 					p.eng.openLimit = int(n)
 				}
 			case "answer":
-				goal, ok := t.Args[0].(*engine.Compound)
+				goal, ok := t.Arg(0).(engine.Compound)
 				if ok {
 					defer p.handleEvent(goal)
 				}
@@ -247,22 +247,5 @@ func (p *prologAnswers) onCreate(id, data engine.Term) error {
 
 // resolve is a version of Simplify that attempts to loosely occurs-check itself to prevent infinite loops
 func resolve(t engine.Term, env *engine.Env, seen map[engine.Term]struct{}) engine.Term {
-	if seen == nil {
-		seen = make(map[engine.Term]struct{})
-	}
-
-	if _, ok := seen[t]; ok {
-		return t
-	}
-	seen[t] = struct{}{}
-
-	switch t := env.Resolve(t).(type) {
-	case *engine.Compound:
-		for i, arg := range t.Args {
-			t.Args[i] = resolve(arg, env, seen)
-		}
-		return t
-	default:
-		return t
-	}
+	return env.Resolve(t)
 }

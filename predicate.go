@@ -46,7 +46,7 @@ func rpc(p *prolog.Interpreter) func(url, query, options engine.Term, k func(*en
 
 		query = env.Simplify(query)
 		var q strings.Builder
-		if err := query.WriteTerm(&q, &engine.WriteOptions{
+		if err := engine.WriteTerm(&q, query, &engine.WriteOptions{
 			Quoted:    true,
 			IgnoreOps: true,
 		}, env); err != nil {
@@ -57,36 +57,36 @@ func rpc(p *prolog.Interpreter) func(url, query, options engine.Term, k func(*en
 		for iter.Next() {
 			cur := env.Resolve(iter.Current())
 			switch x := cur.(type) {
-			case *engine.Compound:
-				switch x.Functor {
+			case engine.Compound:
+				switch x.Functor() {
 				case "application":
-					str := term2str(x.Args[0], env)
+					str := term2str(x.Arg(0), env)
 					if str == "" {
-						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Args[0], env))
+						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Arg(0), env))
 					}
 					client.Application = str
 				case "chunk":
-					n, ok := env.Resolve(x.Args[0]).(engine.Integer)
+					n, ok := env.Resolve(x.Arg(0)).(engine.Integer)
 					if !ok {
-						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Args[0], env))
+						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Arg(0), env))
 					}
 					client.Chunk = int(n)
 				case "src_text":
-					str := term2str(x.Args[0], env)
+					str := term2str(x.Arg(0), env)
 					if str == "" {
-						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Args[0], env))
+						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Arg(0), env))
 					}
 					client.SourceText = str
 				case "src_url":
-					str := term2str(x.Args[0], env)
+					str := term2str(x.Arg(0), env)
 					if str == "" {
-						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Args[0], env))
+						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Arg(0), env))
 					}
 					client.SourceURL = str
 				case "debug":
-					str := term2str(x.Args[0], env)
+					str := term2str(x.Arg(0), env)
 					if str == "" {
-						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Args[0], env))
+						return engine.Error(engine.TypeError(engine.ValidTypeAtom, x.Arg(0), env))
 					}
 					client.Debug = str == "true"
 				}
@@ -127,7 +127,7 @@ func doRPC(as *prologAnswers, query engine.Term, k func(*engine.Env) *engine.Pro
 
 func stringify(t engine.Term) string {
 	var q strings.Builder
-	_ = t.WriteTerm(&q, &engine.WriteOptions{
+	_ = engine.WriteTerm(&q, t, &engine.WriteOptions{
 		Quoted:    true,
 		IgnoreOps: false,
 	}, nil)

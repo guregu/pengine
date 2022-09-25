@@ -38,7 +38,7 @@ func TestPengines(t *testing.T) {
 		engine.Integer(1),
 		engine.Float(2.1),
 		engine.Atom("あ"),
-		&engine.Compound{Functor: "b", Args: []engine.Term{engine.Atom("c")}},
+		engine.Atom("b").Apply(engine.Atom("c")),
 		engine.List(engine.Atom("d")),
 	}
 

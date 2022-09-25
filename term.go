@@ -111,14 +111,11 @@ func (t Term) Prolog() engine.Term {
 		}
 		return engine.Integer(n)
 	case t.Compound != nil:
-		c := &engine.Compound{
-			Functor: engine.Atom(t.Compound.Functor),
-			Args:    make([]engine.Term, 0, len(t.Compound.Args)),
-		}
+		args := make([]engine.Term, 0, len(t.Compound.Args))
 		for _, arg := range t.Compound.Args {
-			c.Args = append(c.Args, arg.Prolog())
+			args = append(args, arg.Prolog())
 		}
-		return c
+		return engine.Atom(t.Compound.Functor).Apply(args...)
 	case t.Variable != nil:
 		// TODO(guregu): what should this be? engine.NewVariable? Is this even useful?
 		return engine.Variable(*t.Variable)

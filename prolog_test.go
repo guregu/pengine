@@ -29,12 +29,12 @@ func TestProlog(t *testing.T) {
 
 	for as.Next(ctx) {
 		t.Logf("answer: %+v", as.Current())
-		cmp, ok := as.Current().(*engine.Compound)
+		cmp, ok := as.Current().(engine.Compound)
 		if !ok {
 			t.Fatal("not a compound", as.Current())
 		}
-		if cmp.Functor != "子" {
-			t.Error("unexpected functor. want: 子 got:", cmp.Functor)
+		if cmp.Functor() != "子" {
+			t.Error("unexpected functor. want: 子 got:", cmp.Functor())
 		}
 	}
 	if err := as.Err(); err != nil {
